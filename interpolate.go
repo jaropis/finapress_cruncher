@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -47,7 +46,6 @@ func interpolate(column []float64) (result []float64) {
 	result = make([]float64, len(column))
 	for i, elem := range column {
 		if elem == -1 && !insideBad {
-			fmt.Println("zaczynam, i=", i)
 			insideBad = true
 			if i == 0 {
 				zero = -2
@@ -66,7 +64,13 @@ func interpolate(column []float64) (result []float64) {
 		}
 
 		if elem == -1 && insideBad {
-			fmt.Println("interpoluje", i, zero, nplus1)
+			if i == 0 {
+				zero = nplus1
+			}
+			if i == (len(column) - 1) {
+				nplus1 = zero
+			}
+			// fmt.Println("interpoluje", i, zero, nplus1)
 			result[i] = (zero + nplus1) / 2
 			badCounter--
 			if badCounter == 0 {
