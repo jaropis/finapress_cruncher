@@ -52,7 +52,7 @@ func processFile(filepath string, extension string) {
 	for i, row := range data {
 
 		// Here, row is a slice of strings (a row in the CSV file)
-		if i > 6 {
+		if i >= 7 {
 			dummy, _ := convertToFloats(row)
 			if !anyBad(dummy) && !insideBad {
 				matrix = append(matrix, dummy)
@@ -63,13 +63,14 @@ func processFile(filepath string, extension string) {
 			}
 			if anyBad(dummy) && (i == 7) {
 				zero = genrateBads(dummy)
+				storage = append(storage, dummy) // append bad first line to storage
 				insideBad = true
 			}
 
 			// you are not insideBad, but a bad row happens - zero is the previous row
 			if anyBad(dummy) && !insideBad {
 				insideBad = true
-				//zero = matrix[i-1]
+				zero = matrix[len(matrix)-1] // the last added row
 			}
 
 			// you are inside bad region, but it ends
@@ -79,8 +80,9 @@ func processFile(filepath string, extension string) {
 				}
 				nplus1 = dummy
 				insideBad = false
+				storage = interpolate(zero, storage, nplus1)
+				//interpolate_dummy(zero, storage, nplus1)
 				for _, storageRow := range storage {
-					interpolate(zero, storage, nplus1)
 					matrix = append(matrix, storageRow)
 				}
 

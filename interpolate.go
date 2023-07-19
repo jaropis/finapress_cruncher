@@ -38,6 +38,33 @@ func genrateBads(vector []float64) (badsy []float64) {
 	return badsy
 }
 
-func interpolate(zero []float64, storage [][]float64, nplus1 []float64) {
+func interpolate(zero []float64, storage [][]float64, nplus1 []float64) (result [][]float64) {
+	if zero[0] == -2 {
+		//fmt.Println(zero)
+		//fmt.Println(storage)
+		//fmt.Println("pierwsza!")
+		zero = nplus1
+	}
 
+	if nplus1[0] == -2 {
+		nplus1 = zero
+	}
+
+	means := make([]float64, len(zero))
+	for i, _ := range means {
+		means[i] = (zero[i] + nplus1[i]) / 2
+	}
+
+	for i, _ := range storage {
+		for j, _ := range storage[0] {
+			if storage[i][j] < 0 {
+				storage[i][j] = means[j]
+			}
+		}
+	}
+	result = storage
+	return result
+}
+
+func interpolate_dummy(zero []float64, storage [][]float64, nplus1 []float64) {
 }
