@@ -7,13 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
-func processCSVFiles(directory string, extension string) {
+func processCSVFiles(directory string) {
 	files, err := os.ReadDir(directory)
 	if err != nil {
 		log.Fatal(err)
@@ -21,17 +20,16 @@ func processCSVFiles(directory string, extension string) {
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".a00") {
-			processFile(filepath.Join(directory, file.Name()), extension)
+			processFile(filepath.Join(directory, file.Name()))
 		}
 	}
 }
 
-func processFile(filepath string, extension string) {
+func processFile(filepath string) {
 	matrix := [][]float64{}
-	insideBad := false
-	zero := []float64{}
-	storage := [][]float64{}
-	nplus1 := []float64{}
+	// insideBad := false
+	// zero := []float64{}
+	// storage := [][]float64{}
 	file, err := os.Open(filepath)
 	if err != nil {
 		log.Fatal(err)
@@ -54,43 +52,21 @@ func processFile(filepath string, extension string) {
 		// Here, row is a slice of strings (a row in the CSV file)
 		if i >= 7 {
 			dummy, _ := convertToFloats(row)
-			if !anyBad(dummy) && !insideBad {
-				matrix = append(matrix, dummy)
-			}
+			matrix = append(matrix, dummy)
+		}
+	}
 
-			if anyBad(dummy) && insideBad {
-				storage = append(storage, dummy)
-			}
-			if anyBad(dummy) && (i == 7) {
-				zero = genrateBads(dummy)
-				storage = append(storage, dummy) // append bad first line to storage
-				insideBad = true
-			}
-
-			// you are not insideBad, but a bad row happens - zero is the previous row
-			if anyBad(dummy) && !insideBad {
-				insideBad = true
-				zero = matrix[len(matrix)-1] // the last added row
-			}
-
-			// you are inside bad region, but it ends
-			if !anyBad(dummy) && insideBad {
-				if i == len(data) {
-					nplus1 = genrateBads(dummy)
-				}
-				nplus1 = dummy
-				insideBad = false
-				storage = interpolate(zero, storage, nplus1)
-				//interpolate_dummy(zero, storage, nplus1)
-				for _, storageRow := range storage {
-					matrix = append(matrix, storageRow)
-				}
-
-				if i < len(data) {
-					matrix = append(matrix, nplus1)
-				}
-				storage = [][]float64{} // reset
-			}
+	// go through all the columns
+	for i := 0; i < len(matrix[0]); i++ {
+		// read a column
+		column := make([]float64, len(matrix))
+		for j := 0; j < len(matrix); j++ {
+			column[j] = matrix[j][i]
+		}
+		column = interpolate(column)
+		// copy interpolated column back to matrix
+		for j := 0; j < len(matrix); j++ {
+			matrix[j][i] = column[j]
 		}
 	}
 
@@ -105,7 +81,7 @@ func processFile(filepath string, extension string) {
 		}
 	}
 
-	newFilepath := strings.TrimSuffix(filepath, path.Ext(filepath)) + "." + extension
+	newFilepath := "processed_" + filepath
 	outputFile, err := os.Create(newFilepath)
 
 	if err != nil {
@@ -124,7 +100,7 @@ func processFile(filepath string, extension string) {
 	writer.Flush()
 }
 
-func addNewLineAfterLine(directory string, lineNumber int, extension string) {
+func addNewLineAfterLine(directory string, lineNumber int) {
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
 		fmt.Printf("Error reading directory %s: %v\n", directory, err)
@@ -133,7 +109,7 @@ func addNewLineAfterLine(directory string, lineNumber int, extension string) {
 
 	for _, file := range files {
 		// Skip if not a file or doesn't have the right extension
-		if file.IsDir() || filepath.Ext(file.Name()) != "."+extension {
+		if file.IsDir() || !strings.HasPrefix(file.Name(), "processed_") {
 			continue
 		}
 
@@ -182,6 +158,6 @@ func addNewLineAfterLine(directory string, lineNumber int, extension string) {
 }
 
 func main() {
-	processCSVFiles(".", "dum")
-	addNewLineAfterLine(".", 3, "dum")
+	processCSVFiles(".")
+	addNewLineAfterLine(".", 3)
 }
